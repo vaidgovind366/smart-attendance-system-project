@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | Master Controls</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #00f2fe; --primary-hover: #05d5df; --orange-heading: #f2994a; --data-positive: #10b981; 
+            --bg-gradient-1: rgba(10, 25, 47, 0.9); --bg-gradient-2: rgba(0, 0, 0, 0.8);
+            --glass-bg: rgba(15, 32, 39, 0.65); --glass-border: rgba(255, 255, 255, 0.08); --glass-highlight: rgba(255, 255, 255, 0.15);
+            --glass-bg-light: rgba(255, 255, 255, 0.03); --glass-bg-hover: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff; --text-muted: #d1d5db;
+        }
+
+        body.light-theme {
+            --bg-gradient-1: rgba(243, 244, 246, 0.9); --bg-gradient-2: rgba(229, 231, 235, 0.95);
+            --glass-bg: rgba(255, 255, 255, 0.7); --glass-border: rgba(0, 0, 0, 0.05); --glass-highlight: rgba(255, 255, 255, 0.8);
+            --glass-bg-light: rgba(255, 255, 255, 0.5); --glass-bg-hover: rgba(255, 255, 255, 0.9);
+            --text-main: #111827; --text-muted: #4b5563; --orange-heading: #d97706; 
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; color: var(--text-main); background-image: linear-gradient(to right bottom, var(--bg-gradient-1), var(--bg-gradient-2)), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=2070&q=80'); background-size: cover; background-attachment: fixed; transition: 0.5s; }
+        * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+        h1, h2, h3 { color: var(--orange-heading) !important; margin-top: 0; text-shadow: 0 2px 10px rgba(242, 153, 74, 0.2); }
+
+        .top-nav { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .nav-btn { background: var(--glass-bg-light); border: 1px solid var(--glass-border); color: var(--text-main); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); text-decoration: none; }
+        .nav-btn:hover { background: var(--glass-bg-hover); border-color: var(--primary); transform: translateY(-2px); }
+
+        .header { text-align: center; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border); margin-top: 10px; }
+        .dashboard-container { display: flex; gap: 25px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
+        
+        .panel-card { background: var(--glass-bg); backdrop-filter: blur(24px); padding: 25px; border-radius: 16px; border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-left: 1px solid var(--glass-highlight); flex: 1; min-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .panel-card:hover { box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); border-color: var(--primary); }
+        .panel-card h3 { border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;}
+
+        /* INPUTS & BUTTONS */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { color: var(--text-muted); display: block; margin-bottom: 8px; font-size: 13px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 14px; background: var(--glass-bg-light); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main); outline: none; font-size: 14px; }
+        .input-group input:focus { border-color: var(--primary); }
+
+        .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); border: none; border-radius: 8px; color: #000; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+        
+        .btn-export-pdf { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-export-csv { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        .btn-danger { background: transparent; border: 1px solid #ff4c4c; color: #ff4c4c; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-danger:hover { background: #ff4c4c; color: #fff; }
+
+        /* CAMERA & UTILS */
+        .cam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; margin-bottom: 20px; display: none; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        table { width: 100%; border-collapse: collapse; } th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--glass-border); font-size: 14px; color: var(--text-main); } th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        
+        #toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 600; transform: translateX(150%); transition: 0.4s; z-index: 9999; }
+        .toast-success { background: var(--data-positive); color: #000 !important; } .toast-error { background: #ff4c4c; }
+
+        /* ANALYTICS SECTION FULL WIDTH */
+        .analytics-panel { width: 100%; margin-top: 25px; }
+        .date-filter-box { display: flex; gap: 15px; align-items: center; background: var(--glass-bg-light); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 20px; flex-wrap: wrap;}
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <a href="index.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Live Dashboard</a>
+        <button class="nav-btn" onclick="toggleTheme()"><i class="fas fa-sun" id="themeIcon"></i> <span id="themeText">Light Mode</span></button>
+    </div>
+
+    <div class="header">
+        <h1>ADMINISTRATION PORTAL</h1>
+        <h2 style="color: var(--primary) !important; font-size: 14px;">Dataset Management & Enterprise Analytics</h2>
+    </div>
+
+    <div class="dashboard-container">
+        
+        <div class="panel-card">
+            <h3><span><i class="fas fa-user-plus"></i> Register New Face</span></h3>
+            <div id="formSection">
+                <div class="input-group"><label>Student ID (Numeric only)</label><input type="number" id="studentId" placeholder="e.g. 101" required></div>
+                <div class="input-group"><label>Full Name</label><input type="text" id="studentName" placeholder="e.g. Govind Vaid" required></div>
+                <button class="btn-primary" id="startCamBtn" onclick="initCamera()"><i class="fas fa-camera"></i> Open Camera</button>
+            </div>
+            <div class="cam-container" id="camContainer"><video id="webcam" autoplay playsinline></video><canvas id="canvas" style="display:none;"></canvas></div>
+            <div style="text-align: center;">
+                <button class="btn-primary" id="captureBtn" style="display: none;" onclick="startCapture()"><i class="fas fa-expand"></i> Capture AI Dataset</button>
+                <p id="statusText" style="color: var(--primary); font-size: 14px; margin-top: 15px; font-weight: bold;"></p>
+                <button class="btn-primary" id="addAnotherBtn" style="display: none; background: var(--data-positive);" onclick="resetForm()"><i class="fas fa-redo"></i> Add Another Student</button>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <h3><span><i class="fas fa-database"></i> Enrolled AI Profiles</span></h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>Date Added</th><th style="text-align: right;">Action</th></tr></thead>
+                    <tbody id="studentTableBody"><tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading database...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="panel-card analytics-panel">
+            <h3><span><i class="fas fa-chart-area"></i> Global Attendance Analytics & Exports</span></h3>
+            
+            <div class="date-filter-box">
+                <div>
+                    <label style="color: var(--text-muted); font-size: 12px; font-weight: bold; margin-right: 10px;">FILTER BY DATE:</label>
+                    <input type="date" id="adminDateFilter" style="padding: 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--text-main); font-family: inherit; outline: none;">
+                </div>
+                <button class="nav-btn" onclick="fetchAdminRecords()" style="background: var(--primary); color: #000; border: none;">Apply Filter</button>
+                <button class="nav-btn" onclick="clearFilter()">Clear</button>
+                
+                <div style="margin-left: auto; display: flex; gap: 10px;">
+                    <button class="btn-export-csv" onclick="exportCSV()"><i class="fas fa-file-excel"></i> Export CSV</button>
+                    <button class="btn-export-pdf" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> Generate PDF</button>
+                </div>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <colgroup><col style="width: 25%;"><col style="width: 20%;"><col style="width: 35%;"><col style="width: 20%;"></colgroup>
+                    <thead><tr><th>Date</th><th>Student ID</th><th>Name</th><th>Time IN</th></tr></thead>
+                    <tbody id="adminRecordsBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Fetching records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast">Message</div>
+
+    <script>
+        // --- THEME SYNC ---
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeIcon').className = isLight ? 'fas fa-moon' : 'fas fa-sun';
+            document.getElementById('themeText').innerText = isLight ? 'Dark Mode' : 'Light Mode';
+        }
+        window.addEventListener('DOMContentLoaded', () => { 
+            if (localStorage.getItem('theme') === 'light') toggleTheme(); 
+            loadDatabase();
+            fetchAdminRecords(); // Load analytics on boot
+        });
+
+        function showToast(msg, type) { const t = document.getElementById('toast'); t.innerText = msg; t.className = type === 'success' ? 'toast-success' : 'toast-error'; t.style.transform = 'translateX(0)'; setTimeout(() => { t.style.transform = 'translateX(150%)'; }, 3000); }
+
+        // --- NEW: ADVANCED ANALYTICS & EXPORT LOGIC ---
+        
+        async function fetchAdminRecords() {
+            const dateVal = document.getElementById('adminDateFilter').value;
+            const tbody = document.getElementById('adminRecordsBody');
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'><i class='fas fa-spinner fa-spin'></i> Loading data...</td></tr>";
+            
+            try {
+                const res = await fetch(`/api/admin_records?date=${dateVal}`);
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color: var(--text-muted);'>No records found for this date.</td></tr>";
+                    return;
+                }
+                
+                let html = "";
+                data.forEach(row => {
+                    html += `<tr>
+                        <td style="color: var(--text-muted); font-weight: bold;">${row.date}</td>
+                        <td>${row.id}</td>
+                        <td style="font-weight: bold;">${row.name}</td>
+                        <td style="color: var(--data-positive);"><i class="far fa-clock"></i> ${row.time}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch(e) { tbody.innerHTML = "<tr><td colspan='4' style='color: #ff4c4c;'>Error fetching records.</td></tr>"; }
+        }
+
+        function clearFilter() {
+            document.getElementById('adminDateFilter').value = '';
+            fetchAdminRecords();
+        }
+
+        // EXPORT TO CSV / EXCEL
+        function exportCSV() {
+            const dateVal = document.getElementById('adminDateFilter').value;
+            // Instantly redirect browser to download the file generated by Python
+            window.location.href = `/api/export_csv?date=${dateVal}`;
+            showToast("CSV Download Initiated", "success");
+        }
+
+        // EXPORT TO HIGH-QUALITY PDF
+        async function exportPDF() {
+            const dateVal = document.getElementById('adminDateFilter').value;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Professional PDF Styling Header
+            doc.setFontSize(22);
+            doc.setTextColor(0, 242, 254); // Cyan
+            doc.text("Shri Shivaji College, Parbhani", 14, 20);
+            
+            doc.setFontSize(16);
+            doc.setTextColor(40, 40, 40);
+            doc.text("Official Attendance Export", 14, 30);
+            
+            doc.setFontSize(11);
+            doc.setTextColor(100, 100, 100);
+            const reportDate = dateVal ? `Filtered Date: ${dateVal}` : `Global All-Time Report`;
+            doc.text(`${reportDate} | Generated: ${new Date().toLocaleString()}`, 14, 38);
+            
+            try {
+                // Fetch the raw data array
+                const res = await fetch(`/api/admin_records?date=${dateVal}`);
+                const data = await res.json();
+                
+                if(data.length === 0) return showToast("No data to export!", "error");
+
+                // Format data for autoTable plugin
+                const tableRows = data.map(r => [r.date, r.id, r.name, r.time]);
+                
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Record Date', 'Student ID', 'Student Name', 'Time IN']],
+                    body: tableRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [15, 32, 39], textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    styles: { fontSize: 10, cellPadding: 6 }
+                });
+                
+                const filename = dateVal ? `Attendance_${dateVal}.pdf` : `Global_Attendance.pdf`;
+                doc.save(filename);
+                showToast("PDF Successfully Generated!", "success");
+                
+            } catch(e) {
+                showToast("Failed to generate PDF.", "error");
+            }
+        }
+
+
+        // --- ORIGINAL REGISTRATION LOGIC ---
+        let stream = null; let captureInterval = null; let frameCount = 0;
+        
+        async function initCamera() {
+            const stId = document.getElementById('studentId').value.trim(); const stName = document.getElementById('studentName').value.trim();
+            if(!stId || !stName) return showToast("Enter ID and Name first.", "error");
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById('webcam').srcObject = stream;
+                document.getElementById('camContainer').style.display = 'block'; document.getElementById('captureBtn').style.display = 'flex'; document.getElementById('startCamBtn').style.display = 'none';
+                document.getElementById('studentId').disabled = true; document.getElementById('studentName').disabled = true;
+            } catch (err) { showToast("Camera access denied.", "error"); }
+        }
+
+        function stopCamera() { if (stream) { stream.getTracks().forEach(track => track.stop()); } document.getElementById('camContainer').style.display = 'none'; }
+
+        function startCapture() {
+            document.getElementById('captureBtn').style.display = 'none'; frameCount = 0;
+            const stId = document.getElementById('studentId').value.trim();
+            document.getElementById('statusText').innerText = "Look at camera and move head slightly...";
+            captureInterval = setInterval(() => sendFrame(stId), 200);
+        }
+
+        async function sendFrame(stId) {
+            const video = document.getElementById('webcam'); const canvas = document.getElementById('canvas'); canvas.width = 640; canvas.height = 480; canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            try {
+                const res = await fetch('/save_face_frame', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: stId, frame: frameCount, image: canvas.toDataURL('image/jpeg', 0.8) }) });
+                const data = await res.json();
+                if (data.face_found) {
+                    frameCount++; document.getElementById('statusText').innerText = `Capturing: ${Math.round((frameCount/30)*100)}%`;
+                    if (frameCount >= 30) { clearInterval(captureInterval); document.getElementById('statusText').innerText = "Training AI Brain..."; trainAI(); }
+                }
+            } catch (e) { }
+        }
+
+        async function trainAI() {
+            const stId = document.getElementById('studentId').value.trim(); const stName = document.getElementById('studentName').value.trim();
+            try {
+                const res = await fetch('/train_ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: stId, name: stName }) });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    stopCamera(); document.getElementById('statusText').innerHTML = "<i class='fas fa-check-circle'></i> AI Trained!"; document.getElementById('statusText').style.color = "var(--data-positive)";
+                    document.getElementById('addAnotherBtn').style.display = 'flex'; showToast("Success!", "success"); loadDatabase(); 
+                } else { showToast("Failed: " + data.message, "error"); resetForm(); }
+            } catch (e) { resetForm(); }
+        }
+
+        function resetForm() {
+            document.getElementById('studentId').value = ''; document.getElementById('studentName').value = ''; document.getElementById('studentId').disabled = false; document.getElementById('studentName').disabled = false;
+            document.getElementById('addAnotherBtn').style.display = 'none'; document.getElementById('statusText').innerText = ''; document.getElementById('startCamBtn').style.display = 'flex';
+        }
+
+        async function loadDatabase() {
+            try {
+                const res = await fetch('/get_students_db'); const data = await res.json(); const tbody = document.getElementById('studentTableBody'); tbody.innerHTML = "";
+                if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Database is empty.</td></tr>`; return; }
+                data.forEach(s => { tbody.innerHTML += `<tr><td>${s[0]}</td><td style="font-weight: bold;">${s[1]}</td><td style="color: var(--text-muted);">${s[2]}</td><td style="text-align: right;"><button class="btn-danger" onclick="deleteStudent('${s[0]}', '${s[1]}')"><i class="fas fa-trash"></i></button></td></tr>`; });
+            } catch (e) {}
+        }
+
+        async function deleteStudent(id, name) {
+            if (confirm(`Delete ${name} (ID: ${id}) & erase face from AI?`)) {
+                try {
+                    const res = await fetch('/delete_student', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) });
+                    if ((await res.json()).status === 'success') { showToast("Deleted.", "success"); loadDatabase(); }
+                } catch (e) {}
+            }
+        }
+    </script>
+</body>
+</html>

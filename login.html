@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Portal | Secure Staff Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --primary-hover: #05d5df;
+            --accent: #f2994a;
+            --data-positive: #10b981;
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.3);
+            --text-muted: #a1a1aa;
+        }
+
+        body {
+            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: linear-gradient(-45deg, #02040a, #0a1128, #050a15, #000000);
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; 
+        }
+
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        body::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            z-index: 0; pointer-events: none;
+        }
+        
+        .blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: 1; opacity: 0.6; animation: float 12s infinite cubic-bezier(0.4, 0, 0.2, 1) alternate; }
+        .blob-1 { width: 350px; height: 350px; background: #00f2fe; top: 10%; left: 20%; animation-delay: 0s; }
+        .blob-2 { width: 450px; height: 450px; background: #ff7b00; bottom: -5%; right: 10%; animation-delay: -4s; }
+        .blob-3 { width: 300px; height: 300px; background: #6a11cb; top: 40%; left: 60%; animation-delay: -8s; }
+
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-30px, 30px) scale(1.05); } 100% { transform: translate(30px, -50px) scale(0.95); } }
+
+        .login-card {
+            background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            padding: 40px; border-radius: 24px; border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-left: 1px solid var(--glass-highlight);
+            width: 380px; text-align: center; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            position: relative; z-index: 10; opacity: 0; transform: translateY(40px) scale(0.95);
+            animation: cardEntry 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes cardEntry { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .welcome-text { color: var(--primary); font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 5px; }
+        .college-name { color: var(--accent); font-size: 28px; margin: 0; letter-spacing: 1.5px; font-weight: 800; text-shadow: 0 4px 15px rgba(242, 153, 74, 0.4); }
+        .login-card h2 { color: #fff; margin: 10px 0 5px; font-weight: 500; font-size: 20px; }
+        .login-card p { color: var(--primary); font-size: 13px; margin-bottom: 25px; letter-spacing: 1px; font-weight: 600; transition: color 0.3s; }
+
+        .input-group { margin-bottom: 20px; text-align: left; position: relative; }
+        .input-group label { color: #d1d5db; display: block; margin-bottom: 6px; font-size: 12px; font-weight: 500; transition: color 0.3s ease; }
+        .input-group input { width: 100%; padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: #fff; outline: none; box-sizing: border-box; font-family: inherit; font-size: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        .input-group input:focus { border-color: var(--primary); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2), inset 0 2px 4px rgba(0,0,0,0.5); }
+        .input-group input:focus + label, .input-group input:not(:placeholder-shown) + label { color: var(--primary); }
+        .toggle-password { position: absolute; right: 15px; top: 34px; cursor: pointer; color: #888; font-size: 12px; font-weight: bold; transition: color 0.3s; } .toggle-password:hover { color: #fff; }
+
+        .options-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: -5px; }
+        .remember-container { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.3s; } .remember-container:hover { color: #fff; }
+        .remember-container input[type="checkbox"] { accent-color: #00f2fe; width: 14px; height: 14px; cursor: pointer; }
+        .action-link { color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; border-bottom: 1px dashed transparent; } .action-link:hover { color: #fff; border-bottom-color: #fff; }
+
+        /* Buttons */
+        .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); border: none; border-radius: 10px; color: #000; font-weight: bold; font-size: 14px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: #fff; box-shadow: none; margin-top: 10px; } .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); color: #fff; } .btn-success:hover { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); }
+
+        .error-message { color: #ff4c4c; font-size: 12px; margin-top: 8px; text-align: left; display: none; font-weight: 500; animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        .form-toggle { margin-top: 20px; font-size: 13px; color: #9ca3af; } .form-toggle span { color: var(--primary); cursor: pointer; font-weight: bold; transition: 0.3s; position: relative; } .form-toggle span::after { content: ''; position: absolute; width: 0; height: 1px; bottom: -2px; left: 0; background-color: var(--primary); transition: width 0.3s ease; } .form-toggle span:hover::after { width: 100%; } .form-toggle span:hover { color: #fff; }
+
+        .form-container { transition: opacity 0.4s ease; display: none; }
+        .form-container.active { display: block; animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Biometric Scanners */
+        .scanner-container { width: 200px; height: 200px; margin: 0 auto 20px; position: relative; border-radius: 50%; overflow: hidden; border: 3px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0, 242, 254, 0.2); background: #000; }
+        .scanner-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.8; }
+        .camera-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.4); pointer-events: none; transition: border-color 0.3s; }
+        
+        .laser-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #00f2fe; box-shadow: 0 0 15px 5px rgba(0, 242, 254, 0.6); animation: scanLaser 2s infinite ease-in-out alternate; z-index: 5; display: none; }
+        @keyframes scanLaser { 0% { top: 0%; } 100% { top: 98%; } }
+
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; margin-top: 15px; display: none; height: 8px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--data-positive); transition: width 0.2s; box-shadow: 0 0 10px var(--data-positive); }
+
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="login-card" id="loginCard">
+        <div class="main-title-container">
+            <span class="welcome-text">Welcome to</span>
+            <h1 class="college-name">SHRI SHIVAJI COLLEGE</h1>
+        </div>
+        <h2>Department of CS</h2>
+        <p id="formSubtitle">STAFF AUTHORIZATION PORTAL</p>
+        
+        <div class="form-container active" id="loginFormContainer">
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Staff Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="name@gmail.com" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    <span class="toggle-password" onclick="toggleVisibility('loginPassword', this)">SHOW</span>
+                    <div id="loginError" class="error-message"><i class="fas fa-exclamation-circle"></i> Invalid email or password.</div>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-container"><input type="checkbox" id="rememberMe"> Remember me</label>
+                    <span class="action-link" onclick="switchForm('forgot')">Forgot Password?</span>
+                </div>
+                
+                <button type="submit" class="btn">SECURE LOGIN</button>
+                <button type="button" class="btn btn-outline" onclick="switchForm('face')"><i class="fas fa-expand"></i> LOGIN WITH FACE ID</button>
+                
+                <div class="form-toggle" style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <span onclick="switchForm('register')">Register Staff</span>
+                    <span onclick="switchForm('enrollFaceAuth')" style="color: var(--data-positive);"><i class="fas fa-fingerprint"></i> Enroll Face ID</span>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-container" id="faceFormContainer">
+            <div class="scanner-container">
+                <video id="loginVideo" class="scanner-video" autoplay playsinline></video>
+                <div class="camera-overlay" id="camOverlay"></div>
+                <div class="laser-line" id="laserLine"></div>
+                <canvas id="hiddenCanvas" style="display:none;"></canvas>
+            </div>
+            
+            <p style="font-size: 13px; color: #d1d5db; margin-top: -10px; margin-bottom: 20px;">Align your face within the circle to securely access the dashboard.</p>
+            <button type="button" class="btn" id="scanFaceBtn" onclick="executeFaceLogin()"><i class="fas fa-fingerprint"></i> INITIATE SCAN</button>
+            <div class="form-toggle">Prefer password? <span onclick="switchForm('login')">Use Credentials</span></div>
+        </div>
+
+        <div class="form-container" id="enrollFaceContainer">
+            <div id="enrollVerifySection">
+                <p style="font-size: 13px; color: #d1d5db; margin-top: -10px; margin-bottom: 15px;">Verify your staff credentials to register your biometric profile.</p>
+                <div class="input-group">
+                    <label>Staff Email</label>
+                    <input type="email" id="enrollEmail" placeholder="name@gmail.com" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="enrollPassword" placeholder="••••••••" required>
+                    <span class="toggle-password" onclick="toggleVisibility('enrollPassword', this)">SHOW</span>
+                    <div id="enrollError" class="error-message"><i class="fas fa-exclamation-circle"></i> Invalid credentials.</div>
+                </div>
+                <button type="button" class="btn btn-success" onclick="verifyForEnrollment()">VERIFY & OPEN CAMERA</button>
+            </div>
+
+            <div id="enrollCameraSection" style="display: none;">
+                <div class="scanner-container">
+                    <video id="enrollVideo" class="scanner-video" autoplay playsinline></video>
+                    <div class="camera-overlay" style="border-color: var(--data-positive);"></div>
+                </div>
+                <button type="button" class="btn btn-success" id="startEnrollBtn" onclick="startAdminFaceCapture()"><i class="fas fa-expand"></i> CAPTURE FACE DATA</button>
+                <p id="enrollStatus" style="font-size: 12px; color: var(--data-positive); font-weight: bold; margin-top: 10px;"></p>
+                <div class="progress-container" id="enrollProgressContainer">
+                    <div class="progress-bar" id="enrollProgressBar"></div>
+                </div>
+            </div>
+            
+            <div class="form-toggle">Cancel enrollment? <span onclick="switchForm('login')">Back to Login</span></div>
+        </div>
+
+        <div class="form-container" id="registerFormContainer">
+            <form id="registerForm">
+                <div class="input-group"><label>Full Name</label><input type="text" id="regName" placeholder="e.g. Prof. Rahul Sharma" required></div>
+                <div class="input-group"><label>Email Address</label><input type="email" id="regEmail" placeholder="name@gmail.com" required></div>
+                <div class="input-group"><label>Create Password</label><input type="password" id="regPassword" placeholder="••••••••" required><span class="toggle-password" onclick="toggleVisibility('regPassword', this)">SHOW</span><div id="regPasswordWarning" class="error-message">Must be 8+ chars, uppercase, number, & symbol.</div></div>
+                <button type="submit" class="btn" style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);">REGISTER AS ADMIN</button>
+                <div class="form-toggle">Already registered? <span onclick="switchForm('login')">Back to Login</span></div>
+            </form>
+        </div>
+
+        <div class="form-container" id="forgotFormContainer">
+            <form id="forgotForm">
+                <div class="input-group"><label>Registered Email</label><input type="email" id="forgotEmail" placeholder="name@gmail.com" required><div id="forgotError" class="error-message">Email not found.</div></div>
+                <div class="input-group" id="newPasswordGroup" style="display: none;"><label>New Password</label><input type="password" id="forgotNewPassword" placeholder="••••••••"><span class="toggle-password" onclick="toggleVisibility('forgotNewPassword', this)">SHOW</span></div>
+                <button type="button" class="btn" id="forgotBtn" onclick="handleForgot()">VERIFY IDENTITY</button>
+                <div class="form-toggle">Remembered it? <span onclick="switchForm('login')">Back to Login</span></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let cameraStream = null;
+        let captureInterval = null;
+        let frameCount = 0;
+        const ADMIN_DB_ID = 9999; // Reserved ID for Admin Face Data
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if(localStorage.getItem('rememberMe') === 'true') {
+                document.getElementById('rememberMe').checked = true;
+                document.getElementById('loginEmail').value = localStorage.getItem('savedEmail') || '';
+                document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
+            }
+        });
+
+        function stopAllCameras() {
+            if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); }
+            document.getElementById('loginVideo').srcObject = null;
+            document.getElementById('enrollVideo').srcObject = null;
+        }
+
+        async function startCamera(videoElementId) {
+            stopAllCameras();
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById(videoElementId).srcObject = cameraStream;
+            } catch (err) { alert("Camera access denied."); }
+        }
+
+        // --- UI TOGGLES ---
+        function switchForm(formType) {
+            document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
+            const subtitle = document.getElementById('formSubtitle');
+            const card = document.getElementById('loginCard');
+
+            card.style.animation = 'none'; card.offsetHeight; 
+            card.style.animation = 'cardEntry 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+            stopAllCameras();
+
+            if (formType === 'register') {
+                document.getElementById('registerFormContainer').classList.add('active');
+                subtitle.innerText = "STAFF REGISTRATION"; subtitle.style.color = "var(--text-muted)";
+            } else if (formType === 'forgot') {
+                document.getElementById('forgotFormContainer').classList.add('active');
+                subtitle.innerText = "PASSWORD RECOVERY"; subtitle.style.color = "var(--text-muted)";
+            } else if (formType === 'face') {
+                document.getElementById('faceFormContainer').classList.add('active');
+                subtitle.innerText = "BIOMETRIC AUTHENTICATION"; subtitle.style.color = "#00f2fe";
+                document.getElementById('scanFaceBtn').innerHTML = "<i class='fas fa-fingerprint'></i> INITIATE SCAN";
+                document.getElementById('scanFaceBtn').disabled = false;
+                document.getElementById('scanFaceBtn').style.background = "";
+                document.getElementById('laserLine').style.display = 'none';
+                document.getElementById('camOverlay').style.borderColor = 'rgba(255,255,255,0.4)';
+                loginScanActive = false; // Reset scan state
+                startCamera('loginVideo');
+            } else if (formType === 'enrollFaceAuth') {
+                document.getElementById('enrollFaceContainer').classList.add('active');
+                subtitle.innerText = "BIOMETRIC ENROLLMENT"; subtitle.style.color = "var(--data-positive)";
+                document.getElementById('enrollVerifySection').style.display = 'block';
+                document.getElementById('enrollCameraSection').style.display = 'none';
+                document.getElementById('enrollProgressContainer').style.display = 'none';
+                document.getElementById('enrollStatus').innerText = '';
+                document.getElementById('startEnrollBtn').style.display = 'flex';
+            } else {
+                document.getElementById('loginFormContainer').classList.add('active');
+                subtitle.innerText = "STAFF AUTHORIZATION PORTAL"; subtitle.style.color = "var(--text-muted)";
+            }
+        }
+
+        function toggleVisibility(inputId, icon) {
+            const input = document.getElementById(inputId); const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type); icon.textContent = type === 'password' ? 'HIDE' : 'SHOW'; icon.style.color = type === 'password' ? '#888' : '#fff';
+        }
+
+        // --- ENROLL ADMIN FACE LOGIC ---
+        function verifyForEnrollment() {
+            const email = document.getElementById('enrollEmail').value;
+            const pass = document.getElementById('enrollPassword').value;
+            const err = document.getElementById('enrollError');
+            
+            const savedEmail = localStorage.getItem("savedEmail");
+            const savedPassword = localStorage.getItem("savedPassword");
+            const isFallbackAdmin = (email === "admin@gmail.com" && pass === "Admin@2026");
+
+            if ((email === savedEmail && pass === savedPassword) || isFallbackAdmin) {
+                err.style.display = 'none';
+                document.getElementById('enrollVerifySection').style.display = 'none';
+                document.getElementById('enrollCameraSection').style.display = 'block';
+                startCamera('enrollVideo');
+            } else {
+                err.style.display = 'block';
+                err.style.animation = 'none'; err.offsetHeight; err.style.animation = 'shake 0.4s ease-in-out';
+            }
+        }
+
+        function startAdminFaceCapture() {
+            document.getElementById('startEnrollBtn').style.display = 'none';
+            document.getElementById('enrollProgressContainer').style.display = 'block';
+            frameCount = 0;
+            document.getElementById('enrollStatus').innerText = "Look at camera and move head slightly...";
+            captureInterval = setInterval(sendAdminFrame, 200);
+        }
+
+        async function sendAdminFrame() {
+            const video = document.getElementById('enrollVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = 640; canvas.height = 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+            try {
+                const res = await fetch('/save_face_frame', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: ADMIN_DB_ID, frame: frameCount, image: imageData })
+                });
+                const data = await res.json();
+                if (data.face_found) {
+                    frameCount++;
+                    let percent = Math.round((frameCount / 30) * 100);
+                    document.getElementById('enrollProgressBar').style.width = percent + '%';
+                    
+                    if (frameCount >= 30) {
+                        clearInterval(captureInterval);
+                        document.getElementById('enrollStatus').innerText = "Training AI Brain...";
+                        trainAdminAI();
+                    }
+                }
+            } catch (e) { console.error("Drop"); }
+        }
+
+        async function trainAdminAI() {
+            try {
+                const res = await fetch('/train_ai', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: ADMIN_DB_ID, name: "System Admin" })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    stopAllCameras();
+                    document.getElementById('enrollProgressContainer').style.display = 'none';
+                    document.getElementById('enrollStatus').innerHTML = "<i class='fas fa-check-circle'></i> Face ID Enabled! Redirecting...";
+                    
+                    const successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+                    successSound.play();
+
+                    setTimeout(() => { switchForm('login'); }, 2000);
+                }
+            } catch (e) { alert("Training failed."); resetEnrollment(); }
+        }
+
+        function resetEnrollment() {
+            clearInterval(captureInterval);
+            document.getElementById('startEnrollBtn').style.display = 'flex';
+            document.getElementById('enrollProgressContainer').style.display = 'none';
+            document.getElementById('enrollStatus').innerText = '';
+        }
+
+        // --- UPGRADED REAL AI FACE LOGIN LOGIC (MULTI-FRAME LOOP) ---
+        let loginScanActive = false;
+
+        async function executeFaceLogin() {
+            const btn = document.getElementById('scanFaceBtn');
+            const overlay = document.getElementById('camOverlay');
+            const video = document.getElementById('loginVideo');
+
+            // Prevent multiple clicks
+            if (loginScanActive) return;
+            loginScanActive = true;
+
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> SCANNING BIOMETRICS...";
+            overlay.style.borderColor = "#00f2fe";
+            
+            let attempts = 0;
+            const maxAttempts = 15; // Try 15 different frames over 3 seconds
+
+            // Recursive function to continuously scan until match is found
+            async function attemptMatch() {
+                if (attempts >= maxAttempts || !loginScanActive) {
+                    // Max attempts reached, face not recognized
+                    loginScanActive = false;
+                    overlay.style.borderColor = "#ff4c4c"; // Turn Red
+                    new Audio('https://assets.mixkit.co/active_storage/sfx/2997/2997-preview.mp3').play().catch(e=>{});
+                    btn.innerHTML = `<i class='fas fa-times-circle'></i> MATCH FAILED`;
+                    
+                    setTimeout(() => {
+                        overlay.style.borderColor = "rgba(255,255,255,0.4)";
+                        btn.style.background = ""; 
+                        btn.disabled = false;
+                        btn.innerHTML = "<i class='fas fa-fingerprint'></i> RETRY SCAN";
+                    }, 2000);
+                    return;
+                }
+
+                attempts++;
+
+                // 1. Capture the frame
+                const canvas = document.createElement('canvas');
+                canvas.width = 640; 
+                canvas.height = 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                try {
+                    const response = await fetch('/api/face_login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: imageData })
+                    });
+                    
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        // SUCCESS! Stop the loop immediately
+                        loginScanActive = false;
+                        overlay.style.borderColor = "#10b981"; // Turn Green
+                        
+                        btn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                        btn.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.4)";
+                        btn.innerHTML = `<i class='fas fa-check-circle'></i> ${data.message.toUpperCase()}`;
+                        
+                        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(e=>{});
+
+                        localStorage.setItem("userRole", "admin");
+
+                        setTimeout(() => {
+                            stopAllCameras(); // Shuts down webcam
+                            window.location.href = "index.html"; 
+                        }, 1500);
+                    } else {
+                        // Failed this specific frame, instantly loop and try again!
+                        setTimeout(attemptMatch, 200); 
+                    }
+
+                } catch (error) {
+                    setTimeout(attemptMatch, 200);
+                }
+            }
+
+            // Fire the first scan!
+            attemptMatch();
+        }
+
+        // --- STANDARD LOGIN / REGISTER / FORGOT LOGIC ---
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value; const password = document.getElementById('regPassword').value;
+            const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
+            if (!strongRegex.test(password)) {
+                document.getElementById('regPasswordWarning').style.display = 'block'; document.getElementById('regPassword').style.borderColor = '#ff4c4c';
+            } else {
+                localStorage.setItem("savedEmail", email); localStorage.setItem("savedPassword", password); localStorage.setItem("savedRole", "admin");
+                alert("✅ Registration Successful! You can now log in."); document.getElementById('registerForm').reset(); switchForm('login');
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value; const pass = document.getElementById('loginPassword').value;
+            const rem = document.getElementById('rememberMe').checked; const err = document.getElementById('loginError');
+
+            if ((email === localStorage.getItem("savedEmail") && pass === localStorage.getItem("savedPassword")) || (email === "admin@gmail.com" && pass === "Admin@2026")) {
+                err.style.display = 'none';
+                localStorage.setItem('rememberMe', rem && email !== "admin@gmail.com" ? 'true' : 'false');
+                localStorage.setItem("userRole", "admin");
+                e.target.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-spinner fa-spin"></i> AUTHENTICATING...';
+                setTimeout(() => { window.location.href = "index.html"; }, 800);
+            } else {
+                err.style.display = 'block'; err.style.animation = 'none'; err.offsetHeight; err.style.animation = 'shake 0.4s ease';
+            }
+        });
+
+        function handleForgot() {
+            const emailInput = document.getElementById('forgotEmail'); const email = emailInput.value.trim();
+            const btn = document.getElementById('forgotBtn'); const err = document.getElementById('forgotError');
+            
+            if (btn.innerText === "VERIFY IDENTITY") {
+                if (email === localStorage.getItem("savedEmail")) {
+                    err.style.display = 'none'; document.getElementById('newPasswordGroup').style.display = 'block';
+                    emailInput.disabled = true; emailInput.style.opacity = '0.4'; btn.innerText = "RESET PASSWORD";
+                } else {
+                    err.innerText = "Email not found."; err.style.display = 'block'; err.style.animation = 'none'; err.offsetHeight; err.style.animation = 'shake 0.4s ease';
+                }
+            } else {
+                const newPass = document.getElementById('forgotNewPassword').value;
+                if(newPass.length < 8) { alert("Password must be 8+ chars."); return; }
+                localStorage.setItem("savedPassword", newPass); alert("✅ Password updated! Redirecting...");
+                switchForm('login');
+            }
+        }
+    </script>
+</body>
+</html>
